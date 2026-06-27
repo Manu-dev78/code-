@@ -10,8 +10,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState('');
-  const [prompt, setPrompt] = useState('');
-  const [usePrompt, setUsePrompt] = useState(false);
   const [language, setLanguage] = useState('python');
   const [viewMode, setViewMode] = useState<'scanner' | 'history'>('scanner');
   const [historyItems, setHistoryItems] = useState<any[]>([]);
@@ -32,13 +30,6 @@ function App() {
 
   const loadHistoryItem = (item: any) => {
     setCode(item.code || '');
-    if (item.prompt) {
-      setPrompt(item.prompt);
-      setUsePrompt(true);
-    } else {
-      setPrompt('');
-      setUsePrompt(false);
-    }
     setLanguage(item.language || 'python');
     setResult({
       ai_probability: item.ai_probability,
@@ -56,18 +47,12 @@ function App() {
       setError('Please enter some code to analyze.');
       return;
     }
-    if (usePrompt && !prompt.trim()) {
-      setError('Please enter the prompt used to generate the code.');
-      return;
-    }
     setLoading(true);
     setError('');
     
     try {
-      const endpoint = usePrompt ? '/analyze/prompt' : '/analyze';
-      const body = usePrompt 
-        ? { code, prompt, language } 
-        : { code, language };
+      const endpoint = '/analyze';
+      const body = { code, language };
       
       const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
       const res = await fetch(`${API_URL}${endpoint}`, {
@@ -227,17 +212,6 @@ function App() {
                   </select>
                 </div>
                 <div className="flex space-x-6">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest cursor-pointer flex items-center">
-                      <input 
-                        type="checkbox" 
-                        checked={usePrompt} 
-                        onChange={(e) => setUsePrompt(e.target.checked)}
-                        className="mr-2 accent-[#00e5ff]"
-                      />
-                      Prompt Mode
-                    </label>
-                  </div>
                   <button onClick={analyzeCode} disabled={loading} className="text-xs font-bold text-[#00e5ff] hover:text-white uppercase tracking-wider">
                     {loading ? 'Analyzing...' : 'Run Scan'}
                   </button>
@@ -251,20 +225,6 @@ function App() {
               )}
 
               <div className="flex-1 flex flex-col overflow-hidden relative">
-                {usePrompt && (
-                  <div className="h-2/5 border-b border-slate-800 flex flex-col bg-[#0f1524]">
-                    <div className="h-10 bg-[#0f1524] flex items-center justify-between px-4 border-b border-slate-800">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Generation Prompt</span>
-                    </div>
-                    <textarea
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Paste the prompt you used to generate this code (e.g. 'Write a python script that cleans a CSV file...')"
-                      className="flex-1 bg-slate-900/30 text-slate-300 font-mono text-xs p-4 resize-none focus:outline-none leading-relaxed"
-                      spellCheck="false"
-                    />
-                  </div>
-                )}
                 <div className="flex-1 flex overflow-hidden relative">
                   <div className="w-12 bg-[#0a0f1c] border-r border-slate-800/50 flex flex-col items-center py-4 font-mono text-xs text-slate-700 select-none overflow-hidden">
                     {lineNumbers.map(n => <div key={n} className="leading-6">{n}</div>)}
@@ -326,49 +286,6 @@ function App() {
                 </div>
               )}
 
-              {/* Prompt Comparison Insight */}
-              {result && result.prompt_comparison && result.prompt_comparison.status === 'success' && (
-                <div className="bg-[#0a0f1c] border border-[#00e5ff]/30 rounded-lg p-5 bg-gradient-to-br from-[#0a0f1c] to-[#00e5ff]/10">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-[#00e5ff]">Structural Verification</h4>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">
-                        Matched against {result.prompt_comparison.ensemble_count} models
-                      </p>
-                    </div>
-                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider ${getBadgeStyle(result.prompt_comparison.max_similarity > 0.6)}`}>
-                      {result.prompt_comparison.verdict}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {result.prompt_comparison.models.map((m: any, idx: number) => (
-                      <div key={idx} className="border-t border-slate-800/50 pt-3 first:border-t-0 first:pt-0">
-                        <div className="flex justify-between items-center mb-1.5">
-                          <span className="text-[10px] font-mono text-slate-400 uppercase">{m.model}</span>
-                          <span className="text-[10px] font-mono text-[#00e5ff]">{Math.round(m.score * 100)}% Match</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 mb-2">
-                           <div className="text-[9px] text-slate-600 flex justify-between uppercase">
-                              <span>Tokens:</span>
-                              <span className="text-slate-400">{Math.round(m.breakdown.token_similarity * 100)}%</span>
-                           </div>
-                           <div className="text-[9px] text-slate-600 flex justify-between uppercase">
-                              <span>Logic:</span>
-                              <span className="text-[#00e5ff]">{Math.round(m.breakdown.structural_similarity * 100)}%</span>
-                           </div>
-                        </div>
-                        <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-[#00e5ff]/60 transition-all duration-1000" 
-                            style={{ width: `${m.score * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Pattern 2: Artifacts */}
               {result && result.details.artifact_score > 0 && (
