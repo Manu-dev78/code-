@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: code_detector_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    # If you have local models or large cache, you might want to mount a volume
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://127.0.0.1:8000}
+    container_name: code_detector_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    environment:
+      # but by default our App.tsx fallback to relative path or a known production URL might be better.
+      # Let's just ensure it's documented.
+      - NODE_ENV=production

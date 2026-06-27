@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+httpx
+transformers
+torch
+python-dotenv
+sentence-transformers
+scikit-learn
+supabase
