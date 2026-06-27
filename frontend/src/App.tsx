@@ -127,7 +127,7 @@ function App() {
 
             <div className="px-6 mt-8">
               <button 
-                onClick={() => { setCode(''); setResult(null); setError(''); setPrompt(''); setUsePrompt(false); setViewMode('scanner'); }}
+                onClick={() => { setCode(''); setResult(null); setError(''); setViewMode('scanner'); }}
                 className="w-full py-2 px-4 border border-slate-700 rounded text-xs font-bold tracking-widest text-[#00e5ff] hover:bg-slate-800 transition-colors flex justify-center items-center space-x-2"
               >
                 <span>+ NEW ANALYSIS</span>

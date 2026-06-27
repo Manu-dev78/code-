@@ -1,10 +1,16 @@
-try:
-    from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer, AutoModelForCausalLM
-    import torch
-    TRANSFORMERS_AVAILABLE = True
-except ImportError:
-    TRANSFORMERS_AVAILABLE = False
-    pipeline = None
+import os
+
+DISABLE_NLP_MODEL = os.getenv("DISABLE_NLP_MODEL", "false").lower() == "true"
+
+TRANSFORMERS_AVAILABLE = False
+pipe = None
+
+if not DISABLE_NLP_MODEL:
+    try:
+        from transformers import pipeline
+        TRANSFORMERS_AVAILABLE = True
+    except ImportError:
+        pass
 
 if TRANSFORMERS_AVAILABLE:
     print("Loading NLP Model...")
@@ -23,8 +29,8 @@ if TRANSFORMERS_AVAILABLE:
         print(f"Failed to load NLP Model: {e}")
         pipe = None
 else:
-    print("Transformers not available. NLP analysis will be skipped.")
-    pipe = None
+    print("NLP model loading is disabled or transformers library is not available. Using local analysis fallbacks.")
+
 
 def analyze_code_perplexity(code: str) -> float:
     """
